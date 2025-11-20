@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +53,8 @@ public class TaskService {
         }
         task.setCreatedBy(request.getCreatedBy());
         task.setAssignedTo(request.getAssignedTo());
+        task.setPriority(request.getPriority() != null ? request.getPriority() : "MEDIUM");
+        task.setTenant(request.getTenant());
         task.setMaxRetries(request.getMaxRetries());
         task.setRetryDelayMs(request.getRetryDelayMs());
 
@@ -93,5 +96,32 @@ public class TaskService {
     @Transactional
     public void updateTaskStatus(UUID taskId, String status) {
         taskRepository.updateStatus(taskId, status, Instant.now());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Task> searchTasksByTimeRange(Instant startDate, Instant endDate, String priority, String tenant) {
+        List<Task> tasks;
+        
+        // Query based on provided filters
+        if (priority != null && !priority.isEmpty() && tenant != null && !tenant.isEmpty()) {
+            // Both priority and tenant filters provided
+            tasks = taskRepository.findByCreatedAtBetweenAndPriorityAndTenant(startDate, endDate, priority, tenant);
+        } else if (priority != null && !priority.isEmpty()) {
+            // Only priority filter provided
+            tasks = taskRepository.findByCreatedAtBetweenAndPriority(startDate, endDate, priority);
+        } else if (tenant != null && !tenant.isEmpty()) {
+            // Only tenant filter provided
+            tasks = taskRepository.findByCreatedAtBetweenAndTenant(startDate, endDate, tenant);
+        } else {
+            // No filters, just time range
+            tasks = taskRepository.findByCreatedAtBetween(startDate, endDate);
+        }
+        
+        return tasks;
     }
 }

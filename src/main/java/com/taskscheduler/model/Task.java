@@ -39,6 +39,10 @@ public class Task {
     @Column("assigned_to")
     private String assignedTo;
     
+    private String priority;  // HIGH, MEDIUM, LOW
+    
+    private String tenant;
+    
     @Column("retry_count")
     private int retryCount;
     

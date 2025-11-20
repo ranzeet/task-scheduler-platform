@@ -22,4 +22,17 @@ public interface TaskRepository extends CassandraRepository<Task, UUID> {
     
     @Query("UPDATE tasks SET next_execution_time = ?1, updated_at = ?2 WHERE id = ?0")
     void updateNextExecutionTime(UUID taskId, Instant nextExecutionTime, Instant updatedAt);
+    
+    @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 ALLOW FILTERING")
+    List<Task> findByCreatedAtBetween(Instant startDate, Instant endDate);
+    
+    @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 AND priority = ?2 ALLOW FILTERING")
+    List<Task> findByCreatedAtBetweenAndPriority(Instant startDate, Instant endDate, String priority);
+    
+    @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 AND tenant = ?2 ALLOW FILTERING")
+    List<Task> findByCreatedAtBetweenAndTenant(Instant startDate, Instant endDate, String tenant);
+    
+    @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 AND priority = ?2 AND tenant = ?3 ALLOW FILTERING")
+    List<Task> findByCreatedAtBetweenAndPriorityAndTenant(Instant startDate, Instant endDate, String priority, String tenant);
 }
+

@@ -12,12 +12,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/tasks")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"}, allowCredentials = "true")
 @RequiredArgsConstructor
 public class TaskController {
 
@@ -87,5 +90,30 @@ public class TaskController {
     public ResponseEntity<String> getTaskStatus(@PathVariable UUID id) {
         Task task = taskService.getTask(id);
         return ResponseEntity.ok(task.getStatus());
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<Task>> getAllTasks() {
+        log.info("Fetching all tasks");
+        List<Task> tasks = taskService.getAllTasks();
+        return ResponseEntity.ok(tasks);
+    }
+    
+    @GetMapping("/search/timerange")
+    public ResponseEntity<List<Task>> searchTasksByTimeRange(
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String tenant) {
+        log.info("Searching tasks by time range: {} to {}, priority: {}, tenant: {}", 
+                startDate, endDate, priority, tenant);
+        
+        Instant start = Instant.parse(startDate);
+        Instant end = Instant.parse(endDate);
+        
+        List<Task> tasks = taskService.searchTasksByTimeRange(start, end, priority, tenant);
+        log.info("Found {} tasks in time range", tasks.size());
+        
+        return ResponseEntity.ok(tasks);
     }
 }

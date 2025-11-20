@@ -12,6 +12,8 @@ public class CreateTaskRequest {
     private Map<String, Object> parameters;
     private String createdBy;
     private String assignedTo;
+    private String priority = "MEDIUM";  // HIGH, MEDIUM, LOW
+    private String tenant;
     private int maxRetries = 3;
     private long retryDelayMs = 5000;
 }
