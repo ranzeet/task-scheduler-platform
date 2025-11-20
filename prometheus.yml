@@ -1,0 +1,27 @@
+# Prometheus configuration file
+global:
+  scrape_interval: 15s     # Set the scrape interval to every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'task-scheduler-platform'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+
+    # Path to scrape metrics from
+    metrics_path: '/actuator/prometheus'
+    
+    # Static configs - replace with your actual application port
+    static_configs:
+      - targets: ['localhost:56839']  # Updated to match your actual port
+        labels:
+          instance: 'task-scheduler-dev'
+          environment: 'development'
+
+  # Optional: Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
