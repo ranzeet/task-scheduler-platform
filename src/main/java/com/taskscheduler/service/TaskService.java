@@ -43,7 +43,7 @@ public class TaskService {
     @Counted(value = "taskscheduler_tasks_created_total", description = "Total number of tasks created")
     public Task createTask(CreateTaskRequest request) {
         Task task = new Task();
-        task.setId(request.getId());
+        task.setId(UUID.randomUUID().toString());
         task.setStatus("CREATED");
         task.setCreatedAt(Instant.now());
         task.setUpdatedAt(Instant.now());
