@@ -319,7 +319,7 @@ const TaskSearch = () => {
       title: 'Task ID',
       dataIndex: 'id',
       key: 'id',
-      width: 200,
+      width: 220,
       ellipsis: {
         showTitle: false,
       },
@@ -330,28 +330,35 @@ const TaskSearch = () => {
       ),
     },
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      width: 150,
-      ellipsis: {
-        showTitle: false,
-      },
-      render: (text) => (
-        <Tooltip placement="topLeft" title={text}>
-          <strong>{text}</strong>
-        </Tooltip>
-      ),
+      title: 'Tenant',
+      dataIndex: 'tenant',
+      key: 'tenant',
+      render: (tenant) => tenant || 'N/A',
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={getStatusColor(status)} style={{ textTransform: 'uppercase' }}>
-          {status}
-        </Tag>
-      ),
+      title: 'Scheduled At',
+      dataIndex: 'scheduledAt',
+      key: 'scheduledAt',
+      render: (scheduledAt) => scheduledAt ? dayjs(scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
+      sorter: (a, b) => {
+        const aTime = a.scheduledAt ? dayjs(a.scheduledAt).unix() : 0;
+        const bTime = b.scheduledAt ? dayjs(b.scheduledAt).unix() : 0;
+        return aTime - bTime;
+      },
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
+      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+    },
+    {
+      title: 'Updated At',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (date) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
+      sorter: (a, b) => dayjs(a.updatedAt).unix() - dayjs(b.updatedAt).unix(),
     },
     {
       title: 'Priority',
@@ -364,42 +371,43 @@ const TaskSearch = () => {
       ),
     },
     {
-      title: 'Next Execution',
-      dataIndex: 'nextExecutionTime',
-      key: 'nextExecutionTime',
-      render: (date) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
-      sorter: (a, b) => {
-        const aTime = a.nextExecutionTime ? dayjs(a.nextExecutionTime).unix() : 0;
-        const bTime = b.nextExecutionTime ? dayjs(b.nextExecutionTime).unix() : 0;
-        return aTime - bTime;
-      },
-    },
-    {
-      title: 'Created At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
-      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
-    },
-    {
-      title: 'Assigned To',
-      dataIndex: 'assignedTo',
-      key: 'assignedTo',
-      render: (assignedTo) => assignedTo || 'N/A',
-    },
-    {
-      title: 'Tenant',
-      dataIndex: 'tenant',
-      key: 'tenant',
-      render: (tenant) => tenant || 'N/A',
-    },
-    {
-      title: 'Retries',
+      title: 'Current Retries',
       dataIndex: 'currentRetries',
       key: 'currentRetries',
       render: (currentRetries, record) => (
         <Tag color={currentRetries > 0 ? 'orange' : 'green'}>
           {currentRetries} / {record.maxRetries}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Retry Delay (ms)',
+      dataIndex: 'retryDelayMs',
+      key: 'retryDelayMs',
+    },
+    {
+      title: 'Execution Result',
+      dataIndex: 'executionResult',
+      key: 'executionResult',
+      render: (result) => (
+        <Tag color={result === 'SUCCESS' ? 'green' : result === 'Pending' ? 'blue' : 'red'}>
+          {result}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Error Message',
+      dataIndex: 'errorMessage',
+      key: 'errorMessage',
+      render: (msg) => msg ? <span style={{ color: 'red' }}>{msg}</span> : <span style={{ color: '#999' }}>None</span>,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={getStatusColor(status)} style={{ textTransform: 'uppercase' }}>
+          {status}
         </Tag>
       ),
     },
@@ -458,27 +466,17 @@ const TaskSearch = () => {
                   </code>
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Name" span={2}>
-                  <strong>{task.name}</strong>
+                <Descriptions.Item label="Tenant" span={2}>
+                  {task.tenant || <span style={{ color: '#999' }}>N/A</span>}
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Description" span={2}>
-                  {task.description}
+                <Descriptions.Item label="Payload" span={2}>
+                  {task.payload || <span style={{ color: '#999' }}>N/A</span>}
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Status">
-                  <Tag color={getStatusColor(task.status)} style={{ textTransform: 'uppercase' }}>
-                    {task.status}
-                  </Tag>
-                </Descriptions.Item>
-                
-                <Descriptions.Item label="Cron Expression">
-                  <code>{task.cronExpression}</code>
-                </Descriptions.Item>
-                
-                <Descriptions.Item label="Next Execution">
-                  {task.nextExecutionTime ? 
-                    dayjs(task.nextExecutionTime).format('YYYY-MM-DD HH:mm:ss') : 
+                <Descriptions.Item label="Scheduled At">
+                  {task.scheduledAt ? 
+                    dayjs(task.scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 
                     <span style={{ color: '#999' }}>Not scheduled</span>
                   }
                 </Descriptions.Item>
@@ -508,14 +506,18 @@ const TaskSearch = () => {
                   </Tag>
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Tenant">
-                  {task.tenant || <span style={{ color: '#999' }}>N/A</span>}
+                <Descriptions.Item label="Retry Count">
+                  {task.retryCount}
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Retry Count">
+                <Descriptions.Item label="Current Retries">
                   <Tag color={task.currentRetries > 0 ? 'orange' : 'green'}>
                     {task.currentRetries} / {task.maxRetries}
                   </Tag>
+                </Descriptions.Item>
+                
+                <Descriptions.Item label="Max Retries">
+                  {task.maxRetries}
                 </Descriptions.Item>
                 
                 <Descriptions.Item label="Retry Delay">
@@ -524,7 +526,7 @@ const TaskSearch = () => {
                 
                 {task.executionResult && (
                   <Descriptions.Item label="Execution Result" span={2}>
-                    <Tag color={task.executionResult === 'Pending' ? 'blue' : 'green'}>
+                    <Tag color={task.executionResult === 'SUCCESS' ? 'green' : task.executionResult === 'Pending' ? 'blue' : 'red'}>
                       {task.executionResult}
                     </Tag>
                   </Descriptions.Item>
@@ -535,11 +537,17 @@ const TaskSearch = () => {
                     <span style={{ color: 'red' }}>{task.errorMessage}</span>
                   </Descriptions.Item>
                 )}
+                
+                <Descriptions.Item label="Status">
+                  <Tag color={getStatusColor(task.status)} style={{ textTransform: 'uppercase' }}>
+                    {task.status}
+                  </Tag>
+                </Descriptions.Item>
               </Descriptions>
 
               {task.parameters && Object.keys(task.parameters).length > 0 && (
                 <>
-                  <Divider orientation="left">Task Body</Divider>
+                  <Divider orientation="left">Task Parameters</Divider>
                   <div className="json-preview" style={{ marginBottom: 24 }}>
                     <pre style={{ background: '#f5f5f5', padding: '12px', borderRadius: '4px', fontSize: '12px' }}>
                       {JSON.stringify(task.parameters, null, 2)}

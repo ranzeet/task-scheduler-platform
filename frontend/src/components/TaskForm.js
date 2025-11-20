@@ -39,11 +39,26 @@ const TaskForm = () => {
         }
       }
 
+      // Parse payload if provided as JSON string
+      let payload = '';
+      if (values.payload) {
+        try {
+          // Validate JSON and then stringify it back
+          JSON.parse(values.payload);
+          payload = values.payload;
+        } catch (error) {
+          message.error('Invalid JSON format for payload');
+          setLoading(false);
+          return;
+        }
+      }
+
       const taskData = {
         name: values.name,
         description: values.description || 'Task created without description',
-        nextExecutionTime: values.nextExecutionTime ? values.nextExecutionTime.toISOString() : null,
+        scheduledAt: values.scheduledAt ? values.scheduledAt.valueOf() : null,
         parameters,
+        payload,
         createdBy: values.createdBy || 'system',
         priority: values.priority || 'MEDIUM',
         tenant: values.tenant || null,
@@ -86,7 +101,7 @@ const TaskForm = () => {
                 name="name"
                 rules={[{ required: true, message: 'Please input task name!' }]}
               >
-                <Input placeholder="e.g., May jesus make us WIN!" />
+                <Input placeholder="e.g., Task Name" />
               </Form.Item>
             </Col>
 
@@ -94,13 +109,13 @@ const TaskForm = () => {
               <Form.Item
                 label={
                   <span>
-                    Next Execution Time{' '}
+                    Scheduled At{' '}
                     <Tooltip title="Select the date and time for next task execution">
                       <InfoCircleOutlined />
                     </Tooltip>
                   </span>
                 }
-                name="nextExecutionTime"
+                name="scheduledAt"
               >
                 <DatePicker 
                   showTime 
@@ -120,7 +135,7 @@ const TaskForm = () => {
               >
                 <TextArea 
                   rows={3} 
-                  placeholder="May the force be with you..."
+                  placeholder="Description of the task (optional)"
                 />
               </Form.Item>
             </Col>
@@ -228,6 +243,35 @@ const TaskForm = () => {
   "source": "customer_db",
   "destination": "analytics_warehouse",
   "batch_size": "1000"
+}`}
+                  style={{ fontFamily: 'monospace', fontSize: '13px' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                label={
+                  <span>
+                    Payload (JSON){' '}
+                    <Tooltip title="Task payload in valid JSON format">
+                      <InfoCircleOutlined />
+                    </Tooltip>
+                  </span>
+                }
+                name="payload"
+              >
+                <TextArea 
+                  rows={6} 
+                  placeholder={`{
+  "action": "run-job",
+  "jobId": 42,
+  "config": {
+    "timeout": 3600,
+    "retryOnFailure": true
+  }
 }`}
                   style={{ fontFamily: 'monospace', fontSize: '13px' }}
                 />

@@ -30,31 +30,30 @@ const { Search } = Input;
 const mockTasks = [
   {
     id: '123e4567-e89b-12d3-a456-426614174000',
-    name: 'Daily Backup Task',
-    description: 'Perform daily database backup',
-    status: 'SCHEDULED',
-    cronExpression: '0 0 2 * * ?',
-    nextExecutionTime: '2025-11-21T02:00:00Z',
+    tenant: 'tenant1',
+    payload: '{"action":"run-job","jobId":42}',
+    scheduledAt: 1700000000000,
     createdAt: '2025-11-20T10:00:00Z',
-    createdBy: 'admin',
-    assignedTo: 'backup-service',
+    updatedAt: '2025-11-20T10:05:00Z',
+    parameters: {
+      param1: 'value1',
+      param2: 'value2'
+    },
+    createdBy: 'user1',
+    assignedTo: 'worker1',
+    priority: 'HIGH',
     retryCount: 0,
+    currentRetries: 0,
     maxRetries: 3,
-    parameters: { database: 'main', compression: true }
-  },
-  {
-    id: '223e4567-e89b-12d3-a456-426614174001',
-    name: 'Weekly Report Generation',
-    description: 'Generate weekly analytics report',
-    status: 'DELAYED',
-    cronExpression: '0 0 9 * * MON',
-    nextExecutionTime: '2025-11-18T09:00:00Z',
-    createdAt: '2025-11-19T08:00:00Z',
-    createdBy: 'analytics-team',
-    assignedTo: 'report-service',
-    retryCount: 1,
-    maxRetries: 2,
-    parameters: { format: 'pdf', recipients: ['admin@company.com'] }
+    retryDelayMs: 60000,
+    executionResult: 'SUCCESS',
+    errorMessage: '',
+    status: 'CREATED',
+    // The following fields are added for compatibility with the table UI
+    name: 'Run Job 42',
+    description: 'Run job with ID 42',
+    cronExpression: '',
+    nextExecutionTime: null
   }
 ];
 
@@ -154,18 +153,114 @@ const TaskList = () => {
 
   const columns = [
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 300,
+      ellipsis: true,
+    },
+    {
+      title: 'Tenant',
+      dataIndex: 'tenant',
+      key: 'tenant',
+      width: 120,
+    },
+    {
+      title: 'Payload',
+      dataIndex: 'payload',
+      key: 'payload',
       width: 200,
-      ellipsis: {
-        showTitle: false,
-      },
-      render: (text) => (
-        <Tooltip placement="topLeft" title={text}>
-          {text}
+      render: (payload) => (
+        <Tooltip placement="topLeft" title={payload}>
+          {payload}
         </Tooltip>
       ),
+    },
+    {
+      title: 'Scheduled At',
+      dataIndex: 'scheduledAt',
+      key: 'scheduledAt',
+      width: 180,
+      render: (scheduledAt) => scheduledAt ? dayjs(scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 180,
+      render: (createdAt) => createdAt ? dayjs(createdAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
+    },
+    {
+      title: 'Updated At',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 180,
+      render: (updatedAt) => updatedAt ? dayjs(updatedAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A',
+    },
+    {
+      title: 'Parameters',
+      dataIndex: 'parameters',
+      key: 'parameters',
+      width: 200,
+      render: (parameters) => (
+        <Tooltip placement="topLeft" title={JSON.stringify(parameters)}>
+          {parameters ? JSON.stringify(parameters) : 'N/A'}
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Created By',
+      dataIndex: 'createdBy',
+      key: 'createdBy',
+      width: 120,
+    },
+    {
+      title: 'Assigned To',
+      dataIndex: 'assignedTo',
+      key: 'assignedTo',
+      width: 120,
+    },
+    {
+      title: 'Priority',
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 100,
+    },
+    {
+      title: 'Retry Count',
+      dataIndex: 'retryCount',
+      key: 'retryCount',
+      width: 100,
+    },
+    {
+      title: 'Current Retries',
+      dataIndex: 'currentRetries',
+      key: 'currentRetries',
+      width: 100,
+    },
+    {
+      title: 'Max Retries',
+      dataIndex: 'maxRetries',
+      key: 'maxRetries',
+      width: 100,
+    },
+    {
+      title: 'Retry Delay (ms)',
+      dataIndex: 'retryDelayMs',
+      key: 'retryDelayMs',
+      width: 120,
+    },
+    {
+      title: 'Execution Result',
+      dataIndex: 'executionResult',
+      key: 'executionResult',
+      width: 120,
+    },
+    {
+      title: 'Error Message',
+      dataIndex: 'errorMessage',
+      key: 'errorMessage',
+      width: 200,
     },
     {
       title: 'Status',
@@ -177,32 +272,6 @@ const TaskList = () => {
           {status}
         </Tag>
       ),
-    },
-    {
-      title: 'Cron Expression',
-      dataIndex: 'cronExpression',
-      key: 'cronExpression',
-      width: 150,
-    },
-    {
-      title: 'Next Execution',
-      dataIndex: 'nextExecutionTime',
-      key: 'nextExecutionTime',
-      width: 180,
-      render: (time) => time ? dayjs(time).format('YYYY-MM-DD HH:mm') : 'N/A',
-    },
-    {
-      title: 'Created By',
-      dataIndex: 'createdBy',
-      key: 'createdBy',
-      width: 120,
-    },
-    {
-      title: 'Retry Count',
-      dataIndex: 'retryCount',
-      key: 'retryCount',
-      width: 100,
-      render: (count, record) => `${count}/${record.maxRetries}`,
     },
     {
       title: 'Actions',
@@ -217,28 +286,6 @@ const TaskList = () => {
               onClick={() => showTaskDetails(record)}
             />
           </Tooltip>
-          
-          {record.status !== 'CANCELLED' && record.status !== 'COMPLETED' && (
-            <Tooltip title="Cancel Task">
-              <Button 
-                type="text" 
-                danger 
-                icon={<StopOutlined />}
-                onClick={() => handleCancel(record.id)}
-              />
-            </Tooltip>
-          )}
-          
-          {(record.status === 'FAILED' || record.status === 'CANCELLED') && (
-            <Tooltip title="Retry Task">
-              <Button 
-                type="text" 
-                icon={<RedoOutlined />}
-                onClick={() => handleRetry(record.id)}
-              />
-            </Tooltip>
-          )}
-          
           <Tooltip title="Delete Task">
             <Button 
               type="text" 
@@ -311,28 +358,25 @@ const TaskList = () => {
             <Descriptions.Item label="ID" span={2}>
               {selectedTask.id}
             </Descriptions.Item>
-            <Descriptions.Item label="Name" span={2}>
-              {selectedTask.name}
+            <Descriptions.Item label="Tenant">
+              {selectedTask.tenant || 'N/A'}
             </Descriptions.Item>
-            <Descriptions.Item label="Description" span={2}>
-              {selectedTask.description}
+            <Descriptions.Item label="Payload">
+              <div className="json-preview">{selectedTask.payload || 'N/A'}</div>
             </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag color={getStatusColor(selectedTask.status)}>
-                {selectedTask.status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Cron Expression">
-              {selectedTask.cronExpression}
-            </Descriptions.Item>
-            <Descriptions.Item label="Next Execution">
-              {selectedTask.nextExecutionTime ? 
-                dayjs(selectedTask.nextExecutionTime).format('YYYY-MM-DD HH:mm:ss') : 
-                'N/A'
-              }
+            <Descriptions.Item label="Scheduled At">
+              {selectedTask.scheduledAt ? dayjs(selectedTask.scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A'}
             </Descriptions.Item>
             <Descriptions.Item label="Created At">
-              {dayjs(selectedTask.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+              {selectedTask.createdAt ? dayjs(selectedTask.createdAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Updated At">
+              {selectedTask.updatedAt ? dayjs(selectedTask.updatedAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Parameters" span={2}>
+              <div className="json-preview">
+                {selectedTask.parameters ? JSON.stringify(selectedTask.parameters, null, 2) : 'N/A'}
+              </div>
             </Descriptions.Item>
             <Descriptions.Item label="Created By">
               {selectedTask.createdBy}
@@ -340,16 +384,31 @@ const TaskList = () => {
             <Descriptions.Item label="Assigned To">
               {selectedTask.assignedTo || 'Not assigned'}
             </Descriptions.Item>
+            <Descriptions.Item label="Priority">
+              {selectedTask.priority || 'N/A'}
+            </Descriptions.Item>
             <Descriptions.Item label="Retry Count">
-              {selectedTask.retryCount} / {selectedTask.maxRetries}
+              {selectedTask.retryCount}
             </Descriptions.Item>
-            <Descriptions.Item label="Retry Delay">
-              {selectedTask.retryDelayMs} ms
+            <Descriptions.Item label="Current Retries">
+              {selectedTask.currentRetries}
             </Descriptions.Item>
-            <Descriptions.Item label="Body" span={2}>
-              <div className="json-preview">
-                {JSON.stringify(selectedTask.parameters, null, 2)}
-              </div>
+            <Descriptions.Item label="Max Retries">
+              {selectedTask.maxRetries}
+            </Descriptions.Item>
+            <Descriptions.Item label="Retry Delay (ms)">
+              {selectedTask.retryDelayMs}
+            </Descriptions.Item>
+            <Descriptions.Item label="Execution Result">
+              {selectedTask.executionResult || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Error Message" span={2}>
+              {selectedTask.errorMessage || 'None'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Status">
+              <Tag color={getStatusColor(selectedTask.status)}>
+                {selectedTask.status}
+              </Tag>
             </Descriptions.Item>
           </Descriptions>
         )}

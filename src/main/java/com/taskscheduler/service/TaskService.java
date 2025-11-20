@@ -63,7 +63,7 @@ public class TaskService {
         task.setRetryDelayMs(request.getRetryDelayMs());
         task.setPayload(request.getPayload());
         task.setScheduledAt(request.getScheduledAt());
-        task.setStatus(request.getStatus());
+        task.setStatus("CREATED");
         log.info("Creating task with id: {}", request.getId());
 
         // Save to Cassandra
@@ -140,5 +140,10 @@ public class TaskService {
         }
         
         return tasks;
+    }
+
+    @Transactional
+    public void updateTaskStatus(String taskId, String status) {
+        taskRepository.updateStatus(taskId, status, Instant.now());
     }
 }

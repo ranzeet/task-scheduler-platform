@@ -93,4 +93,10 @@ public class TaskController {
         
         return ResponseEntity.ok(tasks);
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelTask(@PathVariable String id) {
+        taskService.updateTaskStatus(id, "CANCELLED");
+        return ResponseEntity.noContent().build();
+        }
 }

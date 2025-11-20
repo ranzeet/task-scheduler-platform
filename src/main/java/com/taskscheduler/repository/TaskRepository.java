@@ -18,7 +18,7 @@ public interface TaskRepository extends CassandraRepository<Task, UUID> {
     List<Task> findTasksDueForExecution(Instant currentTime);
     
     @Query("UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?0")
-    void updateStatus(UUID taskId, String status, Instant updatedAt);
+    void updateStatus(String taskId, String status, Instant updatedAt);
     
     @Query("UPDATE tasks SET next_execution_time = ?1, updated_at = ?2 WHERE id = ?0")
     void updateNextExecutionTime(UUID taskId, Instant nextExecutionTime, Instant updatedAt);
