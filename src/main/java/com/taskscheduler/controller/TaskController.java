@@ -3,6 +3,7 @@ package com.taskscheduler.controller;
 import com.taskscheduler.dto.CreateTaskRequest;
 import com.taskscheduler.model.Task;
 import com.taskscheduler.service.TaskService;
+import io.opentelemetry.api.trace.Span;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class TaskController {
         // Show what the timestamp ID looks like
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
         long millis = System.currentTimeMillis() % 1000;
-        
+
         String timestampId = String.format("%04d%02d%02d_%02d%02d%02d_%03d",
                 now.getYear(),
                 now.getMonthValue(),

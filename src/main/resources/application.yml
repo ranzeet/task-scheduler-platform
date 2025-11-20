@@ -67,3 +67,36 @@ flink:
 kafka:
   topics:
     task-requests: task-requests
+    scheduled-tasks: scheduled-tasks
+
+# OpenTelemetry / Jaeger Configuration
+otel:
+  service:
+    name: task-scheduler-platform
+  traces:
+    exporter: otlp
+  exporter:
+    otlp:
+      endpoint: http://localhost:4317  # Jaeger OTLP gRPC endpoint
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0  # Sample 100% of requests (use 0.1 for 10% in production)
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+# Logging Configuration - Include Trace IDs
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [TraceID: %X{trace_id:-N/A}] [SpanID: %X{span_id:-N/A}] - %msg%n"
+  level:
+    root: INFO
+    com.taskscheduler: DEBUG
+    io.opentelemetry: INFO
