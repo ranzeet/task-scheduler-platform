@@ -129,7 +129,7 @@ public class ScheduledTaskListener {
             log.info("Processing task: {} with status: {}", task.getId(), task.getStatus());
 
             // Check if status is SCHEDULED
-            if ("SCHEDULED".equals(task.getStatus())) {
+            if ("CREATED".equals(task.getStatus())) {
                 // Publish message to Kafka
                 kafkaTemplate.send(deliveredTasksTopic, task.getId(), task);
                 log.info("Published task {} to Kafka topic: {}", task.getId(), deliveredTasksTopic);

@@ -125,9 +125,7 @@ const TaskSearch = () => {
   const getStatusColor = (status) => {
     const colors = {
       'CREATED': 'blue',
-      'SCHEDULED': 'cyan',
-      'DELAYED': 'orange',
-      'COMPLETED': 'green',
+      'DELIVERED': 'green',
       'FAILED': 'red',
       'CANCELLED': 'gray',
       'RETRY': 'purple'
@@ -179,7 +177,7 @@ const TaskSearch = () => {
     const tasksByDate = {};
     timeRangeTasks.forEach(task => {
       // Use createdAt as the primary date field
-      const createdDate = dayjs(task.createdAt).format('YYYY-MM-DD');
+      const createdDate = dayjs(task.scheduledAt).format('YYYY-MM-DD');
       
       if (!tasksByDate[createdDate]) {
         tasksByDate[createdDate] = {
@@ -198,7 +196,7 @@ const TaskSearch = () => {
       const status = task.status.toLowerCase();
       if (status === 'created') {
         tasksByDate[createdDate].created++;
-      } else if (status === 'completed') {
+      } else if (status === 'delivered') {
         tasksByDate[createdDate].completed++;
       } else if (status === 'failed') {
         tasksByDate[createdDate].failed++;
@@ -235,7 +233,7 @@ const TaskSearch = () => {
           borderRadius: 4,
         },
         {
-          label: 'Completed',
+          label: 'Delivered',
           data: completedTasks,
           backgroundColor: '#10B981',
           borderColor: '#059669',
@@ -298,7 +296,7 @@ const TaskSearch = () => {
     }
 
     const totalTasks = timeRangeTasks.length;
-    const completedTasks = timeRangeTasks.filter(task => task.status === 'COMPLETED').length;
+    const completedTasks = timeRangeTasks.filter(task => task.status === 'DELIVERED').length;
     const failedTasks = timeRangeTasks.filter(task => task.status === 'FAILED').length;
     const finishedTasks = completedTasks + failedTasks;
     
@@ -650,11 +648,10 @@ const TaskSearch = () => {
                   onChange={setTenant}
                   style={{ width: '100%' }}
                   options={[
-                    { value: 'operations', label: 'Operations' },
-                    { value: 'analytics', label: 'Analytics' },
-                    { value: 'data', label: 'Data' },
-                    { value: 'security', label: 'Security' },
-                    { value: 'marketing', label: 'Marketing' }
+                    { value: 'oms', label: 'oms' },
+                    { value: 'rase', label: 'rase' },
+                    { value: 'payments', label: 'payments' },
+                    { value: 'others', label: 'others' }
                   ]}
                 />
               </Space>
@@ -692,7 +689,7 @@ const TaskSearch = () => {
                 <Col xs={24} sm={6}>
                   <Card>
                     <Statistic 
-                      title="Completed" 
+                      title="Delivered"
                       value={calculateStatistics().completedTasks}
                       valueStyle={{ color: '#52c41a' }}
                     />

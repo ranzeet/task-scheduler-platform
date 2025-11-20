@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface TaskRepository extends CassandraRepository<Task, UUID> {
+public interface TaskRepository extends CassandraRepository<Task, String> {
     
     List<Task> findByStatus(String status);
     
@@ -21,7 +21,7 @@ public interface TaskRepository extends CassandraRepository<Task, UUID> {
     void updateStatus(String taskId, String status, Instant updatedAt);
     
     @Query("UPDATE tasks SET next_execution_time = ?1, updated_at = ?2 WHERE id = ?0")
-    void updateNextExecutionTime(UUID taskId, Instant nextExecutionTime, Instant updatedAt);
+    void updateNextExecutionTime(String taskId, Instant nextExecutionTime, Instant updatedAt);
     
     @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 ALLOW FILTERING")
     List<Task> findByCreatedAtBetween(Instant startDate, Instant endDate);

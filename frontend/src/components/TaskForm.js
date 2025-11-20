@@ -173,8 +173,14 @@ const TaskForm = () => {
               <Form.Item
                 label="Tenant"
                 name="tenant"
+                rules={[{ required: true, message: 'Please select a tenant!' }]}
               >
-                <Input placeholder="default (optional)" />
+                <Select placeholder="Select tenant">
+                  <Option value="oms">oms</Option>
+                  <Option value="rase">rase</Option>
+                  <Option value="payments">payments</Option>
+                  <Option value="others">others</Option>
+                </Select>
               </Form.Item>
             </Col>
 
