@@ -27,32 +27,11 @@ spring:
     local-datacenter: datacenter1
     schema-action: NONE
 
-# Flink Configuration
-flink:
-  job:
-    name: task-scheduler-job
-  checkpoint:
-    interval: 10000  # 10 seconds
-    timeout: 60000   # 1 minute
-    min-pause: 5000  # 5 seconds
-
-# Kafka Topics
+# Kafka Topics (Basic Flow Only)
 kafka:
   topics:
-    task-events: task-events
-    scheduled-tasks: scheduled-tasks
-    task-execution: task-execution
     task-requests: task-requests
-    task-responses: task-responses
-    workflow-events: workflow-events
-    task-notifications: task-notifications
-
-# Task Scheduler Configuration
-task:
-  scheduler:
-    worker-threads: 4
-    max-retry-attempts: 3
-    retry-delay: 5000  # 5 seconds
+    scheduled-tasks: scheduled-tasks
 
 # OpenTelemetry / Jaeger Configuration
 otel:
