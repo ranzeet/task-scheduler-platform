@@ -502,13 +502,39 @@
             "uid": "bf4q2g5ngei9sa"
           },
           "editorMode": "builder",
-          "expr": "jvm_threads_states_threads",
-          "legendFormat": "{{state}}",
+          "expr": "rocksdb_reads_total",
+          "legendFormat": "DB Reads",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf4q2g5ngei9sa"
+          },
+          "editorMode": "builder",
+          "expr": "rocksdb_writes_total",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "DB Writes",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf4q2g5ngei9sa"
+          },
+          "editorMode": "builder",
+          "expr": "rocksdb_stalls_total",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "DB Stalls",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "JVM Thread States",
+      "title": "RocksDB Metrics",
       "type": "timeseries"
     },
     {
@@ -568,7 +594,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "decbytes"
         },
         "overrides": []
       },
@@ -600,13 +627,26 @@
             "uid": "bf4q2g5ngei9sa"
           },
           "editorMode": "builder",
-          "expr": "jvm_threads_states_threads",
-          "legendFormat": "{{state}}",
+          "expr": "rocksdb_compaction_read_total",
+          "legendFormat": "{{__name__}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf4q2g5ngei9sa"
+          },
+          "editorMode": "builder",
+          "expr": "rocksdb_compaction_write_total",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{__name__}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "JVM Thread States",
+      "title": "RocksDB Compaction",
       "type": "timeseries"
     },
     {
@@ -820,5 +860,5 @@
   "timezone": "browser",
   "title": "New dashboard",
   "uid": "adhsgmc",
-  "version": 4
+  "version": 7
 }
