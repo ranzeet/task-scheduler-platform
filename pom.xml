@@ -95,6 +95,8 @@
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-spring-boot-starter</artifactId>
             <version>1.32.0-alpha</version>
+        </dependency>
+        
         <!-- Micrometer Prometheus for metrics -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
