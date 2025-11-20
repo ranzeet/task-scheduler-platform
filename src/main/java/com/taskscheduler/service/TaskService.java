@@ -13,7 +13,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -38,14 +41,30 @@ public class TaskService {
     @Timed(value = "taskscheduler_database_save_duration_seconds", description = "Time taken to save tasks to database")
     @Counted(value = "taskscheduler_tasks_created_total", description = "Total number of tasks created")
     public Task createTask(CreateTaskRequest request) {
-        log.info("Creating task with id: {}", request.getId());
-
         Task task = new Task();
-        task.setId(request.getId());
+        task.setId(UUID.randomUUID().toString());
+        task.setStatus("CREATED");
+        task.setCreatedAt(Instant.now());
+        task.setUpdatedAt(Instant.now());
+        // Convert Map<String, Object> to Map<String, String> for Cassandra
+        if (request.getParameters() != null) {
+            Map<String, String> stringParams = request.getParameters().entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> entry.getValue() != null ? entry.getValue().toString() : null
+                ));
+            task.setParameters(stringParams);
+        }
+        task.setCreatedBy(request.getCreatedBy());
+        task.setAssignedTo(request.getAssignedTo());
+        task.setPriority(request.getPriority() != null ? request.getPriority() : "MEDIUM");
         task.setTenant(request.getTenant());
+        task.setMaxRetries(request.getMaxRetries());
+        task.setRetryDelayMs(request.getRetryDelayMs());
         task.setPayload(request.getPayload());
         task.setScheduledAt(request.getScheduledAt());
-        task.setStatus(request.getStatus());
+        task.setStatus("CREATED");
+        log.info("Creating task with id: {}", request.getId());
 
         // Save to Cassandra
         Task savedTask = taskRepository.save(task);
@@ -100,5 +119,37 @@ public class TaskService {
             return Long.compare(t2.getScheduledAt(), t1.getScheduledAt());
         });
         return tasks;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Task> searchTasksByTimeRange(Instant startDate, Instant endDate, String priority, String tenant) {
+        List<Task> tasks;
+        
+        // Query based on provided filters
+        if (priority != null && !priority.isEmpty() && tenant != null && !tenant.isEmpty()) {
+            // Both priority and tenant filters provided
+            tasks = taskRepository.findByCreatedAtBetweenAndPriorityAndTenant(startDate, endDate, priority, tenant);
+        } else if (priority != null && !priority.isEmpty()) {
+            // Only priority filter provided
+            tasks = taskRepository.findByCreatedAtBetweenAndPriority(startDate, endDate, priority);
+        } else if (tenant != null && !tenant.isEmpty()) {
+            // Only tenant filter provided
+            tasks = taskRepository.findByCreatedAtBetweenAndTenant(startDate, endDate, tenant);
+        } else {
+            // No filters, just time range
+            tasks = taskRepository.findByCreatedAtBetween(startDate, endDate);
+        }
+        
+        return tasks;
+    }
+
+    @Transactional
+    public void updateTaskStatus(String taskId, String status) {
+        taskRepository.updateStatus(taskId, status, Instant.now());
     }
 }
