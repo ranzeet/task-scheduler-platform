@@ -22,11 +22,6 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${kafka.topics.task-events}")
-    private String taskEventsTopic;
-
-    @Value("${kafka.topics.scheduled-tasks}")
-    private String scheduledTasksTopic;
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {

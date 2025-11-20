@@ -3,8 +3,6 @@ package com.taskscheduler.controller;
 import com.taskscheduler.dto.CreateTaskRequest;
 import com.taskscheduler.model.Task;
 import com.taskscheduler.service.TaskService;
-import com.taskscheduler.service.ApiGatewayService;
-import com.taskscheduler.service.WorkflowOrchestrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +13,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -25,18 +22,12 @@ import java.util.concurrent.CompletableFuture;
 public class TaskController {
 
     private final TaskService taskService;
-    private final ApiGatewayService apiGatewayService;
-    private final WorkflowOrchestrationService workflowOrchestrationService;
 
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody CreateTaskRequest request) {
-        log.info("Received task creation request: {}", request.getName());
+        log.info("Received task creation request: {}", request.getId());
         
-        // Process through API Gateway Service (as shown in sequence diagram)
-        Task task = apiGatewayService.processTaskCreationRequest(request);
-        
-        // Start workflow orchestration
-        CompletableFuture<Task> workflowFuture = workflowOrchestrationService.orchestrateTaskWorkflow(task.getId());
+        Task task = taskService.createTask(request);
         
         return ResponseEntity
                 .created(URI.create("/api/tasks/" + task.getId()))
@@ -44,9 +35,8 @@ public class TaskController {
     }
 
     @GetMapping("/health")
-    public ResponseEntity<String> getHello() {
-
-        return ResponseEntity.ok("Allah hu habibi!!! bismilaah nizamudiin sarkar maksqad qubool ho!");
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Task Scheduler Platform - Basic Flow Working!");
     }
 
     @GetMapping("/{id}")
@@ -55,41 +45,28 @@ public class TaskController {
         return ResponseEntity.ok(task);
     }
 
-    @PostMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelTask(@PathVariable UUID id) {
-        taskService.updateTaskStatus(id, "CANCELLED");
-        return ResponseEntity.noContent().build();
+    @GetMapping("/sorted")
+    public ResponseEntity<List<Task>> getTasksSortedByTime() {
+        List<Task> tasks = taskService.getAllTasksSortedByTime();
+        return ResponseEntity.ok(tasks);
     }
 
-    @PostMapping("/{id}/retry")
-    public ResponseEntity<Void> retryTask(@PathVariable UUID id) {
-        log.info("Retrying task: {}", id);
-        taskService.updateTaskStatus(id, "RETRY");
+    @GetMapping("/debug/timestamp-id")
+    public ResponseEntity<String> generateTimestampId() {
+        // Show what the timestamp ID looks like
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        long millis = System.currentTimeMillis() % 1000;
         
-        // Restart workflow orchestration for retry
-        workflowOrchestrationService.orchestrateTaskWorkflow(id);
+        String timestampId = String.format("%04d%02d%02d_%02d%02d%02d_%03d",
+                now.getYear(),
+                now.getMonthValue(),
+                now.getDayOfMonth(),
+                now.getHour(),
+                now.getMinute(),
+                now.getSecond(),
+                millis);
         
-        return ResponseEntity.accepted().build();
-    }
-    
-    @PostMapping("/{id}/schedule")
-    public ResponseEntity<Void> scheduleTask(@PathVariable UUID id) {
-        log.info("Scheduling task: {}", id);
-        apiGatewayService.scheduleTask(id);
-        return ResponseEntity.accepted().build();
-    }
-    
-    @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateTaskStatus(@PathVariable UUID id, @RequestParam String status) {
-        log.info("Updating task status: {} -> {}", id, status);
-        apiGatewayService.processTaskStatusUpdate(id, status);
-        return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/{id}/status")
-    public ResponseEntity<String> getTaskStatus(@PathVariable UUID id) {
-        Task task = taskService.getTask(id);
-        return ResponseEntity.ok(task.getStatus());
+        return ResponseEntity.ok(String.format("Timestamp String: %s%nThis will be stored directly in Cassandra!", timestampId));
     }
     
     @GetMapping

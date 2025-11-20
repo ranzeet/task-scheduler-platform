@@ -34,5 +34,6 @@ public interface TaskRepository extends CassandraRepository<Task, UUID> {
     
     @Query("SELECT * FROM tasks WHERE created_at >= ?0 AND created_at <= ?1 AND priority = ?2 AND tenant = ?3 ALLOW FILTERING")
     List<Task> findByCreatedAtBetweenAndPriorityAndTenant(Instant startDate, Instant endDate, String priority, String tenant);
+    // Basic CRUD operations provided by CassandraRepository
 }
 

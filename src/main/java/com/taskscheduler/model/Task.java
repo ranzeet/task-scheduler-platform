@@ -1,29 +1,29 @@
 package com.taskscheduler.model;
 
 import lombok.Data;
-import org.springframework.data.cassandra.core.mapping.Column;
-import org.springframework.data.cassandra.core.mapping.PrimaryKey;
-import org.springframework.data.cassandra.core.mapping.Table;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
+
+import org.springframework.data.cassandra.core.mapping.Column;
+import org.springframework.data.cassandra.core.mapping.PrimaryKey;
+import org.springframework.data.cassandra.core.mapping.Table;
 
 @Data
 @Table("tasks")
 public class Task {
     @PrimaryKey
-    private UUID id;
+    @Column("id")
+    private String id;
     
-    private String name;
-    private String description;
-    private String status;  // CREATED, SCHEDULED, RUNNING, COMPLETED, FAILED
+    @Column("tenant")
+    private String tenant;
     
-    @Column("cron_expression")
-    private String cronExpression;
+    @Column("payload")
+    private String payload;
     
-    @Column("next_execution_time")
-    private Instant nextExecutionTime;
+    @Column("scheduled_at")
+    private Long scheduledAt;
     
     @Column("created_at")
     private Instant createdAt;
@@ -41,7 +41,6 @@ public class Task {
     
     private String priority;  // HIGH, MEDIUM, LOW
     
-    private String tenant;
     
     @Column("retry_count")
     private int retryCount;
@@ -60,4 +59,6 @@ public class Task {
     
     @Column("error_message")
     private String errorMessage;
+    @Column("status")
+    private String status;
 }
