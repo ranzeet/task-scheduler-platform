@@ -404,13 +404,13 @@
             "uid": "bf4q2g5ngei9sa"
           },
           "editorMode": "builder",
-          "expr": "flink_tasks_failed_total",
-          "legendFormat": "Failed Count",
+          "expr": "flink_checkpoint_duration_seconds_count",
+          "legendFormat": "{{__name__}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Flink Task Failed",
+      "title": "Flink Checkpoints Duration",
       "type": "timeseries"
     },
     {
@@ -860,5 +860,5 @@
   "timezone": "browser",
   "title": "New dashboard",
   "uid": "adhsgmc",
-  "version": 9
+  "version": 10
 }
