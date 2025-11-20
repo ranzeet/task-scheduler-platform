@@ -54,10 +54,16 @@ public class TaskService {
         // Calculate 30 days later in milliseconds
         long thirtyDaysLater = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000);
 
-        // Send to task-requests topic for Flink only if scheduledAt is within 30 days
+        // Send TaskMetaData to task-requests topic for Flink only if scheduledAt is within 30 days
         if (request.getScheduledAt() != null && request.getScheduledAt() < thirtyDaysLater) {
-            kafkaTemplate.send(taskRequestsTopic, savedTask.getId(), savedTask);
-            log.info("Task sent to task-requests topic: {}", savedTask.getId());
+            TaskMetaData taskMetaData = new TaskMetaData();
+            taskMetaData.setId(savedTask.getId());
+            taskMetaData.setTenant(savedTask.getTenant());
+            taskMetaData.setScheduledAt(savedTask.getScheduledAt());
+            taskMetaData.setStatus(savedTask.getStatus());
+            
+            kafkaTemplate.send(taskRequestsTopic, savedTask.getId(), taskMetaData);
+            log.info("TaskMetaData sent to task-requests topic: {} (payload stored only in Cassandra)", savedTask.getId());
         } else {
             long bucketId = 0;
             // Set bucketId as the epoch of the day for scheduledAt

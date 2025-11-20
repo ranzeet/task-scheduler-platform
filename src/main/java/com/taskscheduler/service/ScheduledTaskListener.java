@@ -38,7 +38,7 @@ public class ScheduledTaskListener {
             groupId = "task-scheduler-platform",
             containerFactory = "batchKafkaListenerContainerFactory"
     )
-    public void handleScheduledTask(List<TaskMetaData> tasks) {
+    public void handleScheduledTaskMetadata(List<TaskMetaData> tasks) {
         log.info("Received {} scheduled tasks from Flink", tasks.size());
 
         // Remove duplicates based on task id only

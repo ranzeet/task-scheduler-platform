@@ -22,4 +22,7 @@ public class TaskMetaData {
     @Column("scheduled_at")
     private Long scheduledAt;
 
+    @Column("status")
+    private String status;
+
 }
