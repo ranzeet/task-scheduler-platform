@@ -9,6 +9,7 @@ import com.taskscheduler.repository.TaskRepository;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.annotation.Counted;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class TaskService {
     @Counted(value = "taskscheduler_tasks_created_total", description = "Total number of tasks created")
     public Task createTask(CreateTaskRequest request) {
         Task task = new Task();
-        task.setId(UUID.randomUUID().toString());
+        task.setId(Strings.isBlank(request.getId()) ? UUID.randomUUID().toString() : request.getId());
         task.setStatus("CREATED");
         task.setCreatedAt(Instant.now());
         task.setUpdatedAt(Instant.now());
