@@ -23,7 +23,7 @@ spring:
   cassandra:
     contact-points: localhost
     port: 9042
-    keyspace-name: taskschedulers
+    keyspace-name: taskscheduler
     local-datacenter: datacenter1
     schema-action: NONE
 
@@ -52,6 +52,9 @@ management:
         "[http.server.requests]": 50ms,100ms,200ms,500ms
     tags:
       application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0  # Sample 100% of requests (use 0.1 for 10% in production)
 
 # Custom Application Configuration
 # Flink Configuration
@@ -83,14 +86,6 @@ otel:
   logs:
     exporter: none
 
-management:
-  tracing:
-    sampling:
-      probability: 1.0  # Sample 100% of requests (use 0.1 for 10% in production)
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
 
 # Logging Configuration - Include Trace IDs
 logging:
