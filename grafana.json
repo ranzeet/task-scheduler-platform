@@ -738,13 +738,13 @@
             "uid": "bf4q2g5ngei9sa"
           },
           "editorMode": "builder",
-          "expr": "jvm_threads_states_threads",
-          "legendFormat": "{{state}}",
+          "expr": "http_server_requests_seconds_count{status=\"200\"}",
+          "legendFormat": "{{uri}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "JVM Thread States",
+      "title": "App Success Metrics",
       "type": "timeseries"
     },
     {
@@ -836,13 +836,13 @@
             "uid": "bf4q2g5ngei9sa"
           },
           "editorMode": "builder",
-          "expr": "jvm_threads_states_threads",
-          "legendFormat": "{{state}}",
+          "expr": "http_server_requests_seconds_count{status!=\"200\"}",
+          "legendFormat": "{{uri}}-{{status}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "JVM Thread States",
+      "title": "App Non 200 Metrics",
       "type": "timeseries"
     }
   ],
@@ -860,5 +860,5 @@
   "timezone": "browser",
   "title": "New dashboard",
   "uid": "adhsgmc",
-  "version": 7
+  "version": 9
 }
