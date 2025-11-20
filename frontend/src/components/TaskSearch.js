@@ -236,7 +236,7 @@ const TaskSearch = () => {
         id: editingTask.id
       };
       
-      await taskAPI.updateTask(editingTask.id, updateData);
+      await taskAPI.updateTask(updateData);
       message.success('Task scheduled time updated successfully');
       
       // Close modal and refresh
