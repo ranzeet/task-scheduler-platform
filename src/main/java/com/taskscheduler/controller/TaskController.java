@@ -4,6 +4,7 @@ import com.taskscheduler.dto.CreateTaskRequest;
 import com.taskscheduler.dto.UpdateTaskRequest;
 import com.taskscheduler.model.Task;
 import com.taskscheduler.service.TaskService;
+import com.taskscheduler.SchedulerCron.DailyTaskScheduler;
 import io.opentelemetry.api.trace.Span;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
+    private final DailyTaskScheduler dailyTaskScheduler;
 
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody CreateTaskRequest request) {
@@ -111,5 +115,31 @@ public class TaskController {
     public ResponseEntity<Void> cancelTask(@PathVariable String id) {
         taskService.updateTaskStatus(id, "CANCELLED");
         return ResponseEntity.noContent().build();
+    }
+    
+    @PostMapping("/scheduler/trigger-daily")
+    public ResponseEntity<Map<String, String>> triggerDailyScheduler() {
+        log.info("Manual trigger of daily task scheduler requested");
+        
+        try {
+            // Execute the daily task scheduler method
+            dailyTaskScheduler.fetchAndPublishDailyTasks();
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Daily task scheduler executed successfully");
+            
+            log.info("Daily task scheduler executed successfully via manual trigger");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Error executing daily task scheduler manually: {}", e.getMessage(), e);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to execute daily task scheduler: " + e.getMessage());
+            
+            return ResponseEntity.internalServerError().body(response);
         }
+    }
 }
