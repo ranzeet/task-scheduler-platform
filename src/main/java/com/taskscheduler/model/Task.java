@@ -24,6 +24,9 @@ public class Task {
     private String createdBy;
     private String assignedTo;
     private int retryCount;
+    private int currentRetries;
     private int maxRetries;
     private long retryDelayMs;
+    private String executionResult;
+    private String errorMessage;
 }

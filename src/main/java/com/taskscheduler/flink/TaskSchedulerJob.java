@@ -16,11 +16,10 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -71,18 +70,18 @@ public class TaskSchedulerJob {
 
         // Process the tasks
         DataStream<Task> scheduledTasks = tasks
-                .keyBy(Task::getId)
+                .keyBy(task -> task.getId().toString())
                 .process(new TaskSchedulerFunction())
                 .name("Task Scheduler");
 
         // Sink the scheduled tasks back to Kafka
         KafkaSink<Task> sink = KafkaSink.<Task>builder()
                 .setBootstrapServers(bootstrapServers)
-                .setRecordSerializer(KafkaRecordSerializationSchema.builder()
+                .setRecordSerializer(KafkaRecordSerializationSchema.<Task>builder()
                         .setTopic(scheduledTasksTopic)
-                        .setValueSerializationSchema(new JsonSerializationSchema<>())
+                        .setValueSerializationSchema(new JsonSerializationSchema<Task>())
                         .build())
-                .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .build();
 
         scheduledTasks.sinkTo(sink).name("Kafka Sink");
@@ -96,7 +95,7 @@ public class TaskSchedulerJob {
         private transient ValueState<Long> nextExecutionTimeState;
 
         @Override
-        public void open(Configuration parameters) {
+        public void open(org.apache.flink.api.common.functions.OpenContext openContext) throws Exception {
             ValueStateDescriptor<Long> descriptor = new ValueStateDescriptor<>(
                     "next-execution-time",
                     TypeInformation.of(Long.class)
@@ -133,8 +132,14 @@ public class TaskSchedulerJob {
                 Long nextTime = nextExecutionTimeState.value();
                 
                 if (nextTime != null && nextTime == timestamp) {
+                    // Create a task for processing (simplified - in real implementation you'd store the task)
+                    Task task = new Task();
+                    task.setId(java.util.UUID.fromString(ctx.getCurrentKey()));
+                    task.setStatus("SCHEDULED");
+                    task.setUpdatedAt(java.time.Instant.ofEpochMilli(timestamp));
+                    
                     // Emit the task for processing
-                    out.collect(ctx.getCurrentKey());
+                    out.collect(task);
                     
                     // Schedule the next execution
                     long newNextTime = timestamp + 60000; // Schedule next execution 1 minute later

@@ -43,6 +43,10 @@ kafka:
     task-events: task-events
     scheduled-tasks: scheduled-tasks
     task-execution: task-execution
+    task-requests: task-requests
+    task-responses: task-responses
+    workflow-events: workflow-events
+    task-notifications: task-notifications
 
 # Task Scheduler Configuration
 task:
