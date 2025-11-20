@@ -36,8 +36,8 @@ export const taskAPI = {
   },
 
   // Update task (if endpoint exists)
-  updateTask: (taskId, taskData) => {
-    return apiClient.put(`/tasks/${taskId}`, taskData);
+  updateTask: (taskData) => {
+    return apiClient.post(`/tasks/update`, taskData);
   },
 
   // Delete a task

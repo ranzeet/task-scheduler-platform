@@ -20,7 +20,7 @@ import {
   Tooltip,
   Statistic
 } from 'antd';
-import { SearchOutlined, CalendarOutlined } from '@ant-design/icons';
+import { SearchOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { taskAPI } from '../services/api';
 import {
@@ -70,6 +70,13 @@ const TaskSearch = () => {
   const [timeRangeModalVisible, setTimeRangeModalVisible] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [selectedTimeRangeTask, setSelectedTimeRangeTask] = useState(null);
+  
+  // Update scheduledAt state
+  const [isEditingScheduledAt, setIsEditingScheduledAt] = useState(false);
+  const [newScheduledAt, setNewScheduledAt] = useState(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
   const handleSearch = async (messageId) => {
     if (!messageId || !messageId.trim()) {
@@ -125,9 +132,7 @@ const TaskSearch = () => {
   const getStatusColor = (status) => {
     const colors = {
       'CREATED': 'blue',
-      'SCHEDULED': 'cyan',
-      'DELAYED': 'orange',
-      'COMPLETED': 'green',
+      'DELIVERED': 'green',
       'FAILED': 'red',
       'CANCELLED': 'gray',
       'RETRY': 'purple'
@@ -167,6 +172,84 @@ const TaskSearch = () => {
     }
   };
 
+  const handleUpdateScheduledAt = async (taskId) => {
+    if (!newScheduledAt) {
+      message.warning('Please select a new scheduled date and time');
+      return;
+    }
+
+    setUpdateLoading(true);
+    try {
+      const updateData = {
+        scheduledAt: newScheduledAt.valueOf(),
+        id: taskId
+      };
+      
+      await taskAPI.updateTask(updateData);
+      message.success('Task scheduled time updated successfully');
+      
+      // Reset edit mode
+      setIsEditingScheduledAt(false);
+      setNewScheduledAt(null);
+      
+      // Refresh the task details
+      if (activeTab === 'messageId') {
+        handleSearch(taskId);
+      } else {
+        handleTimeRangeSearch();
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      message.error('Failed to update task: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingScheduledAt(false);
+    setNewScheduledAt(null);
+  };
+
+  const handleOpenEditModal = (task) => {
+    setEditingTask(task);
+    setNewScheduledAt(task.scheduledAt ? dayjs(task.scheduledAt) : dayjs());
+    setEditModalVisible(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalVisible(false);
+    setEditingTask(null);
+    setNewScheduledAt(null);
+  };
+
+  const handleSaveFromModal = async () => {
+    if (!editingTask || !newScheduledAt) {
+      message.warning('Please select a new scheduled date and time');
+      return;
+    }
+
+    setUpdateLoading(true);
+    try {
+      const updateData = {
+        scheduledAt: newScheduledAt.valueOf(),
+        id: editingTask.id
+      };
+      
+      await taskAPI.updateTask(editingTask.id, updateData);
+      message.success('Task scheduled time updated successfully');
+      
+      // Close modal and refresh
+      handleCloseEditModal();
+      handleTimeRangeSearch();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      message.error('Failed to update task: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   // Removed showTimeRangeTaskDetails function - no longer needed
 
   // Chart data preparation functions
@@ -179,7 +262,7 @@ const TaskSearch = () => {
     const tasksByDate = {};
     timeRangeTasks.forEach(task => {
       // Use createdAt as the primary date field
-      const createdDate = dayjs(task.createdAt).format('YYYY-MM-DD');
+      const createdDate = dayjs(task.scheduledAt).format('YYYY-MM-DD');
       
       if (!tasksByDate[createdDate]) {
         tasksByDate[createdDate] = {
@@ -198,7 +281,7 @@ const TaskSearch = () => {
       const status = task.status.toLowerCase();
       if (status === 'created') {
         tasksByDate[createdDate].created++;
-      } else if (status === 'completed') {
+      } else if (status === 'delivered') {
         tasksByDate[createdDate].completed++;
       } else if (status === 'failed') {
         tasksByDate[createdDate].failed++;
@@ -235,7 +318,7 @@ const TaskSearch = () => {
           borderRadius: 4,
         },
         {
-          label: 'Completed',
+          label: 'Delivered',
           data: completedTasks,
           backgroundColor: '#10B981',
           borderColor: '#059669',
@@ -298,7 +381,7 @@ const TaskSearch = () => {
     }
 
     const totalTasks = timeRangeTasks.length;
-    const completedTasks = timeRangeTasks.filter(task => task.status === 'COMPLETED').length;
+    const completedTasks = timeRangeTasks.filter(task => task.status === 'DELIVERED').length;
     const failedTasks = timeRangeTasks.filter(task => task.status === 'FAILED').length;
     const finishedTasks = completedTasks + failedTasks;
     
@@ -411,6 +494,24 @@ const TaskSearch = () => {
         </Tag>
       ),
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      fixed: 'right',
+      width: 100,
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Update Schedule">
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleOpenEditModal(record)}
+              size="small"
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
   ];
 
   const items = [
@@ -474,11 +575,50 @@ const TaskSearch = () => {
                   {task.payload || <span style={{ color: '#999' }}>N/A</span>}
                 </Descriptions.Item>
                 
-                <Descriptions.Item label="Scheduled At">
-                  {task.scheduledAt ? 
-                    dayjs(task.scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 
-                    <span style={{ color: '#999' }}>Not scheduled</span>
-                  }
+                <Descriptions.Item label="Scheduled At" span={2}>
+                  {isEditingScheduledAt ? (
+                    <Space>
+                      <DatePicker
+                        showTime
+                        format="YYYY-MM-DD HH:mm:ss"
+                        value={newScheduledAt}
+                        onChange={setNewScheduledAt}
+                        placeholder="Select new date and time"
+                        style={{ width: 300 }}
+                      />
+                      <Button 
+                        type="primary" 
+                        size="small"
+                        loading={updateLoading}
+                        onClick={() => handleUpdateScheduledAt(task.id)}
+                      >
+                        Save
+                      </Button>
+                      <Button 
+                        size="small"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                    </Space>
+                  ) : (
+                    <Space>
+                      {task.scheduledAt ? 
+                        dayjs(task.scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 
+                        <span style={{ color: '#999' }}>Not scheduled</span>
+                      }
+                      <Button 
+                        type="link" 
+                        size="small"
+                        onClick={() => {
+                          setIsEditingScheduledAt(true);
+                          setNewScheduledAt(task.scheduledAt ? dayjs(task.scheduledAt) : dayjs());
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </Space>
+                  )}
                 </Descriptions.Item>
                 
                 <Descriptions.Item label="Created At">
@@ -558,6 +698,17 @@ const TaskSearch = () => {
 
               <Divider orientation="left">Actions</Divider>
               <Space size="middle">
+                <Button 
+                  type="default"
+                  onClick={() => {
+                    setIsEditingScheduledAt(true);
+                    setNewScheduledAt(task.scheduledAt ? dayjs(task.scheduledAt) : dayjs());
+                  }}
+                  disabled={isEditingScheduledAt}
+                >
+                  Update Schedule
+                </Button>
+                
                 {task.status !== 'CANCELLED' && task.status !== 'COMPLETED' && (
                   <Button 
                     danger 
@@ -650,11 +801,10 @@ const TaskSearch = () => {
                   onChange={setTenant}
                   style={{ width: '100%' }}
                   options={[
-                    { value: 'operations', label: 'Operations' },
-                    { value: 'analytics', label: 'Analytics' },
-                    { value: 'data', label: 'Data' },
-                    { value: 'security', label: 'Security' },
-                    { value: 'marketing', label: 'Marketing' }
+                    { value: 'oms', label: 'oms' },
+                    { value: 'rase', label: 'rase' },
+                    { value: 'payments', label: 'payments' },
+                    { value: 'others', label: 'others' }
                   ]}
                 />
               </Space>
@@ -692,7 +842,7 @@ const TaskSearch = () => {
                 <Col xs={24} sm={6}>
                   <Card>
                     <Statistic 
-                      title="Completed" 
+                      title="Delivered"
                       value={calculateStatistics().completedTasks}
                       valueStyle={{ color: '#52c41a' }}
                     />
@@ -913,6 +1063,55 @@ const TaskSearch = () => {
               {dayjs(selectedTimeRangeTask.eventPublishTime).format('YYYY-MM-DD HH:mm:ss')}
             </Descriptions.Item>
           </Descriptions>
+        )}
+      </Modal>
+
+      {/* Edit Scheduled Time Modal */}
+      <Modal
+        title="Update Scheduled Time"
+        open={editModalVisible}
+        onCancel={handleCloseEditModal}
+        footer={[
+          <Button key="cancel" onClick={handleCloseEditModal}>
+            Cancel
+          </Button>,
+          <Button 
+            key="save" 
+            type="primary" 
+            loading={updateLoading}
+            onClick={handleSaveFromModal}
+          >
+            Update
+          </Button>
+        ]}
+        width={500}
+      >
+        {editingTask && (
+          <div>
+            <p style={{ marginBottom: 16 }}>
+              <strong>Task ID:</strong> <code>{editingTask.id?.substring(0, 30)}...</code>
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              <strong>Current Scheduled Time:</strong>{' '}
+              {editingTask.scheduledAt ? 
+                dayjs(editingTask.scheduledAt).format('YYYY-MM-DD HH:mm:ss') : 
+                'Not scheduled'
+              }
+            </p>
+            <div>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                New Scheduled Time:
+              </label>
+              <DatePicker
+                showTime
+                format="YYYY-MM-DD HH:mm:ss"
+                value={newScheduledAt}
+                onChange={setNewScheduledAt}
+                placeholder="Select new date and time"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
         )}
       </Modal>
     </div>
