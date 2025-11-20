@@ -15,6 +15,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.taskscheduler.model.TaskMetaData
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -23,7 +24,7 @@ spring:
   cassandra:
     contact-points: localhost
     port: 9042
-    keyspace-name: taskschedulers
+    keyspace-name: taskscheduler
     local-datacenter: datacenter1
     schema-action: NONE
 
@@ -52,6 +53,9 @@ management:
         "[http.server.requests]": 50ms,100ms,200ms,500ms
     tags:
       application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0  # Sample 100% of requests (use 0.1 for 10% in production)
 
 # Custom Application Configuration
 # Flink Configuration
@@ -67,3 +71,28 @@ flink:
 kafka:
   topics:
     task-requests: task-requests
+    scheduled-tasks: scheduled-tasks
+
+# OpenTelemetry / Jaeger Configuration
+otel:
+  service:
+    name: task-scheduler-platform
+  traces:
+    exporter: otlp
+  exporter:
+    otlp:
+      endpoint: http://localhost:4317  # Jaeger OTLP gRPC endpoint
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+
+
+# Logging Configuration - Include Trace IDs
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [TraceID: %X{trace_id:-N/A}] [SpanID: %X{span_id:-N/A}] - %msg%n"
+  level:
+    root: INFO
+    com.taskscheduler: DEBUG
+    io.opentelemetry: INFO

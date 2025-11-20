@@ -97,7 +97,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     @Timed(value = "taskscheduler_database_query_duration_seconds", description = "Time taken to query tasks from database")
-    public Task getTask(UUID taskId) {
+    public Task getTask(String taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
     }
