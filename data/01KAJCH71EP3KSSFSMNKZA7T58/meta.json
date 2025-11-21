@@ -1,0 +1,18 @@
+{
+	"ulid": "01KAJCH71EP3KSSFSMNKZA7T58",
+	"minTime": 1763690401873,
+	"maxTime": 1763697600000,
+	"stats": {
+		"numSamples": 742706,
+		"numFloatSamples": 742706,
+		"numSeries": 1964,
+		"numChunks": 5499
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01KAJCH71EP3KSSFSMNKZA7T58"
+		]
+	},
+	"version": 1
+}
